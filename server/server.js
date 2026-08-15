@@ -45,6 +45,9 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   message: { success: false, message: "Too many requests, try later" },
+  skipSuccessfulRequests: true, // Don't count successful logins
+  standardHeaders: true, // Send rate limit info in headers
+  legacyHeaders: false, // Send rate limit info in headers
 });
 
 app.use("/api/auth", authLimiter, authRoutes);
