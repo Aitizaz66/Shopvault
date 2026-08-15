@@ -19,10 +19,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 
-// ✅ Add this line to fix rate limiter warning
-app.set("trust proxy", 1);
-
 app.use(express.json());
+app.set("trust proxy", 1);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -36,8 +34,6 @@ app.use(
       "https://shopvault-admin.vercel.app",
     ],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
