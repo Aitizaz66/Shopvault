@@ -19,6 +19,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 
+// ✅ Add this line to fix rate limiter warning
+app.set("trust proxy", 1);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -29,7 +32,7 @@ app.use(
       "http://localhost:3000",
       "http://localhost:5173",
       "http://localhost:5174",
-      "https://shopvault-client.vercel.app", // ← Your client URL
+      "https://shopvault-client.vercel.app",
       "https://shopvault-admin.vercel.app",
     ],
     credentials: true,
@@ -37,6 +40,7 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -55,6 +59,21 @@ app.get("/api/health", (req, res) => {
     message: "Server is running",
     timeStamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
+  });
+});
+
+// Root route (add this)
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "ShopVault API is running!",
+    endpoints: {
+      auth: "/api/auth",
+      products: "/api/products",
+      orders: "/api/orders",
+      admin: "/api/admin",
+      health: "/api/health",
+    },
   });
 });
 
