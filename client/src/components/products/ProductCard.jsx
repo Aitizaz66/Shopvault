@@ -1,11 +1,14 @@
 // frontend-customer/src/components/products/ProductCard.jsx
-import { Link } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../store/slices/cartSlice.js";
 import { toast } from "react-hot-toast";
 
 const ProductCard = ({ product }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
   if (!product) {
     return null;
@@ -14,6 +17,12 @@ const ProductCard = ({ product }) => {
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to your cart");
+      navigate("/login?redirect=/cart");
+      return;
+    }
 
     if (product.stock === 0) {
       toast.error("Sorry, this product is out of stock!");

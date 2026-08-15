@@ -41,6 +41,12 @@ const ProductDetailPage = () => {
   const handleAddToCart = () => {
     if (!product) return;
 
+    if (!isAuthenticated) {
+      toast.error("Please login to add items to your cart");
+      navigate(`/login?redirect=/product/${id}`);
+      return;
+    }
+
     if (product.stock === 0) {
       toast.error("Sorry, this product is out of stock!");
       return;
@@ -60,7 +66,6 @@ const ProductDetailPage = () => {
     toast.success(`${product.name} added to cart!`);
     navigate("/cart");
   };
-
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
 

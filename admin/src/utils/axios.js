@@ -14,10 +14,8 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("adminInfo");
-      window.location.href = "/admin/login";
-    }
+    // Do NOT redirect automatically here.
+    // AdminGuard will decide whether the user should go to login.
     return Promise.reject(error);
   },
 );
