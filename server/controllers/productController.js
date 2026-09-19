@@ -1,27 +1,53 @@
 import Product from "../models/Product.js";
-
+// ============================================
+// @desc    Get all products
+// @route   GET /api/products
+// @access  Public
+// ============================================
 export const getProducts = async (req, res) => {
   try {
-    const page = req.query.page || 1;
-    const limit = req.query.limit || 10;
+    // Safe parsing of page and limit
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit, 10) || 10);
     const skip = (page - 1) * limit;
 
+    // Filters
     const keyword = req.query.keyword
-      ? {
-          name: {
-            $regex: req.query.keyword,
-            $options: "i",
-          },
-        }
+      ? { name: { $regex: req.query.keyword, $options: "i" } }
       : {};
+
     const category = req.query.category ? { category: req.query.category } : {};
+
     const filter = { ...keyword, ...category };
 
+    // ✅ SORT LOGIC
+    let sortOption = { createdAt: -1 };
+
+    switch (req.query.sort) {
+      case "price-low":
+        sortOption = { price: 1 };
+        break;
+      case "price-high":
+        sortOption = { price: -1 };
+        break;
+      case "newest":
+        sortOption = { createdAt: -1 };
+        break;
+      case "rating":
+        sortOption = { rating: -1 };
+        break;
+      default:
+        sortOption = { createdAt: -1 };
+    }
+
+    console.log("📊 Sort requested:", req.query.sort, "→ Applied:", sortOption);
+
     const total = await Product.countDocuments(filter);
+
     const products = await Product.find(filter)
+      .sort(sortOption)
       .limit(limit)
-      .skip(skip)
-      .sort({ createdAt: -1 });
+      .skip(skip);
 
     res.status(200).json({
       success: true,
@@ -34,10 +60,10 @@ export const getProducts = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error.message);
+    console.error("❌ Get Products Error:", error.message);
     res.status(500).json({
       success: false,
-      message: "Internal Server Error fetching products",
+      message: error.message || "Server error fetching products",
     });
   }
 };

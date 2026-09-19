@@ -27,16 +27,19 @@ const ProductListPage = () => {
     const params = {
       page,
       limit: 12,
-      category: selectedCategory || undefined,
       keyword: keyword || undefined,
+      category: selectedCategory || undefined,
+      sort: sortBy || "newest", // ✅ Add sort param
     };
+
     Object.keys(params).forEach((key) => {
       if (params[key] === undefined) {
         delete params[key];
       }
     });
+
     dispatch(getProducts(params));
-  }, [dispatch, page, selectedCategory, keyword]);
+  }, [dispatch, page, keyword, selectedCategory, sortBy]); // ✅ Add sortBy to deps
 
   const handleSearch = (e) => {
     e.preventDefault();
