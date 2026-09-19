@@ -58,35 +58,37 @@ const ProductCard = ({ product }) => {
             }}
           />
           {product.stock === 0 ? (
-            <span className="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+            <span className="absolute top-2 right-2 bg-red-600 text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-full">
               Out of Stock
             </span>
           ) : product.stock <= 5 ? (
-            <span className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+            <span className="absolute top-2 right-2 bg-yellow-500 text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-full">
               Only {product.stock} left
             </span>
           ) : (
-            <span className="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+            <span className="absolute top-2 right-2 bg-green-600 text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-full">
               In Stock
             </span>
           )}
         </div>
 
-        <div className="p-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+        <div className="p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider mb-1">
             {product.category}
           </p>
-          <h3 className="font-semibold text-gray-800 text-base mb-1 line-clamp-2 min-h-[3rem]">
+          <h3 className="font-semibold text-gray-800 text-sm sm:text-base mb-2 line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">
             {product.name}
           </h3>
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-xl font-bold text-blue-600">
+
+          {/* ✅ Fixed: Stacked on mobile, side-by-side on larger screens */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <span className="text-base sm:text-xl font-bold text-blue-600">
               ${product.price?.toFixed(2)}
             </span>
             <button
               onClick={handleAddToCart}
               disabled={product.stock === 0}
-              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
+              className={`w-full sm:w-auto px-3 sm:px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors ${
                 product.stock === 0
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-blue-600 text-white hover:bg-blue-700"
