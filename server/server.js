@@ -24,19 +24,33 @@ app.set("trust proxy", 1);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use(
+aapp.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://shopvault-client-b9uu5qk9i-aitizaz.vercel.app",
-      "https://shopvault-store.vercel.app/",
-      "https://shopvault-admin.vercel.app",
-      "https://shopvault-client-b9uu5qk9i-aitizaz.vercel.app",
-      "https://vercel.com/aitizaz/shopvault-admin/7PuaCNxE1rvh3CuzvThWmbjShzGb",
-    ],
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, Postman, curl)
+      if (!origin) return callback(null, true);
+
+      // Allow all Vercel deployments
+      if (origin.endsWith(".vercel.app")) {
+        return callback(null, true);
+      }
+
+      // Allow localhost for development
+      if (origin.includes("localhost")) {
+        return callback(null, true);
+      }
+
+      // Allow Render
+      if (origin.includes("onrender.com")) {
+        return callback(null, true);
+      }
+
+      console.warn("❌ CORS blocked origin:", origin);
+      callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
