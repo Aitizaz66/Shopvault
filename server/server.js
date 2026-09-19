@@ -24,7 +24,7 @@ app.set("trust proxy", 1);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-aapp.use(
+app.use(
   cors({
     origin: function (origin, callback) {
       // Allow requests with no origin (mobile apps, Postman, curl)
