@@ -1,8 +1,11 @@
+import AboutPage from "./pages/AboutPage.jsx";
+import FAQPage from "./pages/FAQPage.jsx";
+import ContactPage from "./pages/ContactPage.jsx";
 import { useEffect } from "react";
 import { Routes, Route, BrowserRouter } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { useDispatch } from "react-redux";
-import { checkAuth } from "./store/slices/authSlice.js";
+import { checkAuth, sessionExpired } from "./store/slices/authSlice.js";
 import { getCategories } from "./store/slices/productSlice.js";
 
 import Layout from "./components/layout/Layout.jsx";
@@ -25,8 +28,11 @@ import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 function App() {
   const dispatch = useDispatch();
   useEffect(() => {
+    const expire = () => dispatch(sessionExpired());
+    window.addEventListener("shopvault:unauthorized", expire);
     dispatch(checkAuth());
     dispatch(getCategories());
+    return () => window.removeEventListener("shopvault:unauthorized", expire);
   }, [dispatch]);
   return (
     <BrowserRouter>
@@ -47,6 +53,9 @@ function App() {
           <Route path="/products" element={<ProductListPage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/contact" element={<ContactPage />} />
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/checkout" element={<CheckoutPage />} />

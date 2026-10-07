@@ -27,17 +27,6 @@ router.get("/admin-profile", adminProtect, getUserProfile);
 router.put("/admin-profile", adminProtect, updateUserProfile);
 
 
-router.get("/admin-check", adminProtect, (req, res) => {
-  res.status(200).json({
-    success: true,
-    isAuthenticated: true,
-    user: {
-      _id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      isAdmin: req.user.isAdmin,
-    },
-  });
-});
+router.get("/admin-check", adminProtect, checkAuth);
 
 export default router;

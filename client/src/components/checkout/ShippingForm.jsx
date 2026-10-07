@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const ShippingForm = ({ onSubmit, initialData = {} }) => {
+const ShippingForm = ({ onSubmit, initialData = {}, isLoading = false }) => {
   const [formData, setFormData] = useState({
     address: initialData.address || "",
     city: initialData.city || "",
@@ -73,7 +73,7 @@ const ShippingForm = ({ onSubmit, initialData = {} }) => {
     }
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number is required";
-    } else if (!/^[0-9]{7,15}$/.test(formData.phone.replace(/\s/g, ""))) {
+    } else if (!/^[0-9]{7,15}$/.test(formData.phone.replace(/[\s()-]/g, ""))) {
       newErrors.phone = "Please enter a valid phone number (7-15 digits)";
     }
     setErrors(newErrors);
@@ -165,7 +165,7 @@ const ShippingForm = ({ onSubmit, initialData = {} }) => {
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition ${
               errors.country ? "border-red-500" : "border-gray-300"
             }`}
-            placeholder="Paktisan"
+            placeholder="Pakistan"
           />
           {errors.country && (
             <p className="text-sm text-red-500 mt-1">{errors.country}</p>
@@ -218,9 +218,10 @@ const ShippingForm = ({ onSubmit, initialData = {} }) => {
 
         <button
           type="submit"
+          disabled={isLoading}
           className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
         >
-          Continue to Payment →
+          {isLoading ? "Checking availability..." : "Review order →"}
         </button>
       </form>
     </div>

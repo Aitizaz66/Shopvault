@@ -1,156 +1,58 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../utils/axios.js";
-
-const adminInfo = localStorage.getItem("adminInfo")
-  ? JSON.parse(localStorage.getItem("adminInfo"))
-  : null;
-
-export const login = createAsyncThunk(
-  "adminAuth/login",
-  async (credentials, { rejectWithValue }) => {
-    try {
-      const response = await api.post("/api/auth/admin-login", credentials);
-      const user = response.data.data;
-      if (!user.isAdmin) return rejectWithValue("Access denied. Admin only.");
-      return user;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Login failed");
-    }
-  },
-);
-
-export const logout = createAsyncThunk("adminAuth/logout", async () => {
-  try {
-    await api.post("/api/auth/admin-logout");
-  } catch (e) {
-    console.error(e);
-  }
-  localStorage.removeItem("adminInfo");
-  return true;
+import { readStored, writeStored } from "../../../../shared/storage.js";
+import { errorMessage } from "../../../../shared/http.js";
+export const login = createAsyncThunk("adminAuth/login", async (data, { rejectWithValue }) => {
+  try { return (await api.post("/api/auth/admin-login", data)).data.data; }
+  catch (error) { return rejectWithValue(error.response?.status === 401 && "login" === "checkAuth" ? "Not authenticated" : errorMessage(error)); }
 });
-
-export const checkAuth = createAsyncThunk(
-  "adminAuth/checkAuth",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await api.get("/api/auth/admin-check");
-      return response.data.user;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Not authenticated",
-      );
-    }
-  },
-);
-
-export const updateUserProfile = createAsyncThunk(
-  "adminAuth/updateProfile",
-  async (userData, { rejectWithValue }) => {
-    try {
-      const response = await api.put("/api/auth/admin-profile", userData);
-
-      return response.data.data;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to update profile",
-      );
-    }
-  },
-);
-
-const adminAuthSlice = createSlice({
-  name: "adminAuth",
-  initialState: {
-    userInfo: adminInfo,
-    isAuthenticated: !!adminInfo,
-    isAdmin: !!adminInfo?.isAdmin,
-    isLoading: false,
-    error: null,
-  },
-  reducers: {
-    clearError: (state) => {
-      state.error = null;
-    },
-  },
-  extraReducers: (builder) => {
-    builder
-      // LOGIN
-      .addCase(login.pending, (state) => {
-        state.isLoading = true;
+export const checkAuth = createAsyncThunk("adminAuth/checkAuth", async (data, { rejectWithValue }) => {
+  try { return (await api.get("/api/auth/admin-check", data)).data.user; }
+  catch (error) { return rejectWithValue(error.response?.status === 401 && "checkAuth" === "checkAuth" ? "Not authenticated" : errorMessage(error)); }
+});
+export const updateUserProfile = createAsyncThunk("adminAuth/updateUserProfile", async (data, { rejectWithValue }) => {
+  try { return (await api.put("/api/auth/admin-profile", data)).data.data; }
+  catch (error) { return rejectWithValue(error.response?.status === 401 && "updateUserProfile" === "checkAuth" ? "Not authenticated" : errorMessage(error)); }
+});
+export const logout = createAsyncThunk("adminAuth/logout", async (data, { rejectWithValue }) => {
+  try { return (await api.post("/api/auth/admin-logout", data)).data.success; }
+  catch (error) { return rejectWithValue(error.response?.status === 401 && "logout" === "checkAuth" ? "Not authenticated" : errorMessage(error)); }
+});
+const initialState = { userInfo: readStored("adminInfo", null), isAuthenticated: false, isAdmin: false, isChecking: true, isLoading: false, error: null, requests: {} };
+const clearSession = (state) => {
+  Object.assign(state, { userInfo: null, isAuthenticated: false, isAdmin: false, isChecking: false, isLoading: false, error: null, requests: {} });
+  writeStored("adminInfo", undefined);
+};
+const slice = createSlice({
+  name: "adminAuth", initialState,
+  reducers: { clearError: state => { state.error = null; }, sessionExpired: clearSession },
+  extraReducers: builder => {
+    for (const thunk of [login, checkAuth, updateUserProfile, logout]) {
+      builder.addCase(thunk.pending, (state, action) => {
+        state.requests[thunk.typePrefix] = action.meta.requestId;
+        if (thunk === checkAuth) state.isChecking = true;
+        else { state.isLoading = true; delete state.requests[checkAuth.typePrefix]; state.isChecking = false; }
         state.error = null;
-      })
-      .addCase(login.fulfilled, (state, action) => {
+      }).addCase(thunk.fulfilled, (state, action) => {
+        if (state.requests[thunk.typePrefix] !== action.meta.requestId) return;
+        delete state.requests[thunk.typePrefix];
+        if (thunk === logout) { clearSession(state); return; }
         state.isLoading = false;
-        state.userInfo = action.payload;
-        state.isAuthenticated = true;
-        state.isAdmin = true;
-
-        localStorage.setItem("adminInfo", JSON.stringify(action.payload));
-      })
-      .addCase(login.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
-        state.isAuthenticated = false;
-        state.isAdmin = false;
-      })
-
-      // LOGOUT
-      .addCase(logout.fulfilled, (state) => {
-        state.userInfo = null;
-        state.isAuthenticated = false;
-        state.isAdmin = false;
-
-        localStorage.removeItem("adminInfo");
-      })
-      .addCase(logout.rejected, (state) => {
-        state.userInfo = null;
-        state.isAuthenticated = false;
-        state.isAdmin = false;
-
-        localStorage.removeItem("adminInfo");
-      })
-
-      // CHECK AUTH
-      .addCase(checkAuth.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(checkAuth.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.userInfo = action.payload;
-        state.isAuthenticated = true;
-        state.isAdmin = true;
-
-        localStorage.setItem("adminInfo", JSON.stringify(action.payload));
-      })
-      .addCase(checkAuth.rejected, (state) => {
-        state.isLoading = false;
-        state.userInfo = null;
-        state.isAuthenticated = false;
-        state.isAdmin = false;
-
-        localStorage.removeItem("adminInfo");
-      })
-
-      // UPDATE PROFILE
-      .addCase(updateUserProfile.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(updateUserProfile.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.isChecking = false;
         state.userInfo = action.payload;
         state.isAuthenticated = true;
         state.isAdmin = !!action.payload?.isAdmin;
-
-        localStorage.setItem("adminInfo", JSON.stringify(action.payload));
-      })
-      .addCase(updateUserProfile.rejected, (state, action) => {
+        writeStored("adminInfo", action.payload);
+      }).addCase(thunk.rejected, (state, action) => {
+        if (state.requests[thunk.typePrefix] !== action.meta.requestId) return;
+        delete state.requests[thunk.typePrefix];
         state.isLoading = false;
-        state.error = action.payload;
+        state.isChecking = false;
+        if (thunk === checkAuth) clearSession(state);
+        state.error = action.payload === "Not authenticated" ? null : action.payload || action.error.message;
       });
+    }
   },
 });
-
-export const { clearError } = adminAuthSlice.actions;
-export default adminAuthSlice.reducer;
+export const { clearError, sessionExpired } = slice.actions;
+export default slice.reducer;

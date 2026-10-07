@@ -1,3 +1,4 @@
+import RequestError from "../components/shared/RequestError.jsx";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -9,7 +10,7 @@ import { toast } from "react-hot-toast";
 
 const OrdersPage = () => {
   const dispatch = useDispatch();
-  const { orders, isLoading } = useSelector((state) => state.adminOrders);
+  const { orders, isLoading, error } = useSelector((state) => state.adminOrders);
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
@@ -29,6 +30,7 @@ const OrdersPage = () => {
     filter === "all"
       ? orders
       : orders?.filter((order) => order.status === filter);
+  if (error && !isLoading) return <RequestError message={error} onRetry={() => dispatch(getOrders())} />;
 
   return (
     <div>

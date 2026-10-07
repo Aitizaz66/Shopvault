@@ -6,7 +6,7 @@ export const addReview = async (req, res) => {
     const { rating, comment } = req.body;
     const productId = req.params.productId;
 
-    if (!rating || !comment) {
+    if (!Number.isInteger(rating) || typeof comment !== "string" || !comment.trim() || comment.length > 500) {
       return res.status(400).json({
         success: false,
         message: "Please provide rating and comment",
@@ -41,6 +41,7 @@ export const addReview = async (req, res) => {
       "orderItems.product": productId,
       isPaid: true,
       isDelivered: true,
+      status: { $ne: "Cancelled" },
     });
     if (!hasPurchased) {
       return res.status(400).json({
@@ -53,7 +54,7 @@ export const addReview = async (req, res) => {
       user: req.user._id,
       name: req.user.name,
       rating: Number(rating),
-      comment,
+      comment: comment.trim(),
       createdAt: Date.now(),
     });
     product.numReviews = product.reviews.length;
@@ -67,13 +68,7 @@ export const addReview = async (req, res) => {
       message: "Review added successfully",
       data: product.reviews[product.reviews.length - 1],
     });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error adding review",
-    });
-  }
+  } catch (error) { throw error; }
 };
 
 export const getProductReviews = async (req, res) => {
@@ -93,13 +88,7 @@ export const getProductReviews = async (req, res) => {
       rating: product.rating,
       numReviews: product.numReviews,
     });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error fetching product reviews",
-    });
-  }
+  } catch (error) { throw error; }
 };
 
 export const deleteReview = async (req, res) => {
@@ -135,13 +124,7 @@ export const deleteReview = async (req, res) => {
       success: true,
       message: "Review deleted successfully",
     });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error deleting review",
-    });
-  }
+  } catch (error) { throw error; }
 };
 
 export const getAllReviews = async (req, res) => {
@@ -163,11 +146,5 @@ export const getAllReviews = async (req, res) => {
       count: reviews.length,
       data: reviews,
     });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error fetching reviews",
-    });
-  }
+  } catch (error) { throw error; }
 };

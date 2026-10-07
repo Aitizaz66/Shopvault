@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import RequestError from "../components/shared/RequestError.jsx";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
 import { getProducts, getCategories } from "../store/slices/productSlice.js";
@@ -8,14 +9,12 @@ const ProductListPage = () => {
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { products, isLoading, pagination, categories } =
+  const { products, isLoading, pagination, categories, error } =
     useSelector((state) => state.products) || {};
 
-  const [selectedCategory, setSelectedCategory] = useState(
-    searchParams.get("category") || "",
-  );
-  const [sortBy, setSortBy] = useState("newest");
-  const [keyword, setKeyword] = useState(searchParams.get("keyword") || "");
+  const selectedCategory = searchParams.get("category") || "";
+  const sortBy = searchParams.get("sort") || "newest";
+  const keyword = searchParams.get("keyword") || "";
 
   const page = Number(searchParams.get("page")) || 1;
 
@@ -41,41 +40,18 @@ const ProductListPage = () => {
     dispatch(getProducts(params));
   }, [dispatch, page, keyword, selectedCategory, sortBy]); // ✅ Add sortBy to deps
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setSearchParams({
-      ...(keyword && { keyword }),
-      ...(selectedCategory && { category: selectedCategory }),
-      page: 1,
-    });
+  const updateFilters = values => {
+    const params = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries({ page: 1, ...values })) {
+      if (value) params.set(key, String(value)); else params.delete(key);
+    }
+    setSearchParams(params);
   };
-
-  const handleCategoryChange = (category) => {
-    setSelectedCategory(category);
-    setSearchParams({
-      ...(keyword && { keyword }),
-      ...(category && { category }),
-      page: 1,
-    });
-  };
-  const handleSortChange = (e) => {
-    setSortBy(e.target.value);
-  };
-
-  // Handle page change
-  const handlePageChange = (newPage) => {
-    setSearchParams({
-      ...(keyword && { keyword }),
-      ...(selectedCategory && { category: selectedCategory }),
-      page: newPage,
-    });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-  const clearFilters = () => {
-    setKeyword("");
-    setSelectedCategory("");
-    setSearchParams({ page: 1 });
-  };
+  const handleSearch = e => { e.preventDefault(); updateFilters({ keyword: new FormData(e.currentTarget).get("keyword").trim() }); };
+  const handleCategoryChange = category => updateFilters({ category });
+  const handleSortChange = e => updateFilters({ sort: e.target.value });
+  const handlePageChange = page => { updateFilters({ page }); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const clearFilters = () => setSearchParams({});
 
   const totalPages = pagination?.pages || 1;
   const currentPage = pagination?.page || 1;
@@ -87,9 +63,7 @@ const ProductListPage = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">All Products</h1>
         <p className="text-gray-500 mt-1">
-          {totalProducts > 0
-            ? `${totalProducts} products found`
-            : "Loading products..."}
+          {isLoading ? "Loading products..." : `${totalProducts} products found`}
         </p>
       </div>
 
@@ -102,8 +76,9 @@ const ProductListPage = () => {
               <input
                 type="text"
                 placeholder="Search products..."
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
+                key={keyword}
+                name="keyword"
+                defaultValue={keyword}
                 className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
@@ -155,7 +130,7 @@ const ProductListPage = () => {
       </div>
 
       {/* Products Grid */}
-      {isLoading ? (
+      {error ? <RequestError message={error} onRetry={() => dispatch(getProducts({ page, limit: 12, keyword, category: selectedCategory, sort: sortBy }))} /> : isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {[...Array(8)].map((_, index) => (
             <div key={index} className="animate-pulse">

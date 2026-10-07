@@ -31,15 +31,18 @@ const adminUserSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getUsers.pending, (state) => {
+      .addCase(getUsers.pending, (state, action) => {
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(getUsers.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.users = action.payload;
       })
       .addCase(getUsers.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       });

@@ -1,3 +1,4 @@
+import RequestError from "../components/shared/RequestError.jsx";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
@@ -10,6 +11,7 @@ const HomePage = () => {
     products = [],
     categories = [],
     isLoading = false,
+    error,
   } = useSelector((state) => state.products) || {};
 
   useEffect(() => {
@@ -125,7 +127,7 @@ const HomePage = () => {
               {categories.map((category, index) => (
                 <Link
                   key={index}
-                  to={`/products?category=${category}`}
+                  to={`/products?category=${encodeURIComponent(category)}`}
                   className="group bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 text-center hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                 >
                   <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -173,7 +175,7 @@ const HomePage = () => {
             </Link>
           </div>
 
-          {isLoading ? (
+          {error ? <RequestError message={error} onRetry={() => dispatch(getProducts({ limit: 8 }))} /> : isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, index) => (
                 <div key={index} className="animate-pulse">

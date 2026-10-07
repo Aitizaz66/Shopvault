@@ -1,112 +1,20 @@
-import dotenv from "dotenv";
-dotenv.config();
-
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import path from "path";
-import { fileURLToPath } from "url";
-
-import authRoutes from "./routes/authRoutes.js";
-import productRoutes from "./routes/productRoutes.js";
-import orderRoutes from "./routes/orderRoutes.js";
-import reviewRoutes from "./routes/reviewRoutes.js";
-import adminRoutes from "./routes/adminRoutes.js";
+import "dotenv/config";
+import mongoose from "mongoose";
 import connectDB from "./config/db.js";
-import rateLimit from "express-rate-limit";
+import Order from "./models/Order.js";
+import { createApp } from "./app.js";
+import { allowedOrigins } from "./config/origins.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const app = express();
-
-app.use(express.json());
-app.set("trust proxy", 1);
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (mobile apps, Postman, curl)
-      if (!origin) return callback(null, true);
-
-      // Allow all Vercel deployments
-      if (origin.endsWith(".vercel.app")) {
-        return callback(null, true);
-      }
-
-      // Allow localhost for development
-      if (origin.includes("localhost")) {
-        return callback(null, true);
-      }
-
-      // Allow Render
-      if (origin.includes("onrender.com")) {
-        return callback(null, true);
-      }
-
-      console.warn("❌ CORS blocked origin:", origin);
-      callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { success: false, message: "Too many requests, try later" },
-  skipSuccessfulRequests: true, // Don't count successful logins
-  standardHeaders: true, // Send rate limit info in headers
-  legacyHeaders: false, // Send rate limit info in headers
-});
-
-app.use("/api/auth", authLimiter, authRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/orders", orderRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use("/api/admin", adminRoutes);
-
-app.get("/api/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Server is running",
-    timeStamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development",
-  });
-});
-
-// Root route (add this)
-app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "ShopVault API is running!",
-    endpoints: {
-      auth: "/api/auth",
-      products: "/api/products",
-      orders: "/api/orders",
-      admin: "/api/admin",
-      health: "/api/health",
-    },
-  });
-});
-
-app.use((req, res) => {
-  res
-    .status(404)
-    .json({ success: false, message: `Route Not Found ${req.originalUrl}` });
-});
-
-app.use((err, req, res, next) => {
-  console.error(err.message);
-  res
-    .status(err.statusCode || 500)
-    .json({ success: false, message: err.message || "Server Error" });
-});
-
+for (const key of ["MONGODB_URI", "JWT_SECRET"]) {
+  if (!process.env[key]) throw new Error(`${key} must be configured`);
+}
+if (process.env.NODE_ENV === "production" && !allowedOrigins().size) {
+  throw new Error("Configure CLIENT_URL, ADMIN_URL, or ALLOWED_ORIGINS before starting production");
+}
+await connectDB();
+const topology = await mongoose.connection.db.admin().command({ hello: 1 });
+if (!topology.setName && topology.msg !== "isdbgrid") throw new Error("ShopVault requires a MongoDB replica set (for example Atlas) for atomic order creation");
+// Ensure retry protection exists before accepting orders, including in production.
+await Order.createIndexes();
 const PORT = process.env.PORT || 5000;
-connectDB().then(() => {
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-});
+createApp().listen(PORT, () => console.log(`Server running on port ${PORT}`));

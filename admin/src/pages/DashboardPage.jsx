@@ -1,3 +1,4 @@
+import RequestError from "../components/shared/RequestError.jsx";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getDashboardStats } from "../store/slices/adminStatsSlice.js";
@@ -9,7 +10,7 @@ import { DollarSign, ShoppingBag, Users, Package } from "lucide-react";
 
 const DashboardPage = () => {
   const dispatch = useDispatch();
-  const { stats, isLoading } = useSelector((state) => state.adminStats);
+  const { stats, isLoading, error } = useSelector((state) => state.adminStats);
 
   useEffect(() => {
     dispatch(getDashboardStats());
@@ -41,6 +42,7 @@ const DashboardPage = () => {
       color: "bg-orange-500",
     },
   ];
+  if (error && !isLoading) return <RequestError message={error} onRetry={() => dispatch(getDashboardStats())} />;
 
   return (
     <div>

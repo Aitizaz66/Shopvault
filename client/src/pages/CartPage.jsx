@@ -1,26 +1,21 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
   removeFromCart,
   updateQuantity,
   clearCart,
 } from "../store/slices/cartSlice.js";
-import { openCart } from "../store/slices/uiSlice.js";
+import { cartTotals } from "../../../shared/pricing.js";
 import { toast } from "react-hot-toast";
 
 const CartPage = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { cartItems } = useSelector((state) => state.cart);
   const { isAuthenticated } = useSelector((state) => state.auth);
 
   // Calculate totals
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0,
-  );
-  const shipping = subtotal > 50 ? 0 : 5;
-  const tax = subtotal * 0.1;
-  const total = subtotal + shipping + tax;
+  const { itemsPrice: subtotal, shippingPrice: shipping, taxPrice: tax, totalPrice: total } = cartTotals(cartItems);
 
   const handleUpdateQuantity = (productId, quantity) => {
     if (quantity < 1) {
@@ -36,14 +31,7 @@ const CartPage = () => {
     toast.success("Item removed from cart");
   };
 
-  const handleCheckout = () => {
-    if (isAuthenticated) {
-      dispatch(openCart());
-      window.location.href = "/checkout";
-    } else {
-      window.location.href = "/login?redirect=checkout";
-    }
-  };
+  const handleCheckout = () => navigate("/checkout");
 
   if (cartItems.length === 0) {
     return (
@@ -116,6 +104,7 @@ const CartPage = () => {
                   onClick={() =>
                     handleUpdateQuantity(item.product, item.quantity + 1)
                   }
+                  disabled={item.quantity >= item.stock}
                   className="w-8 h-8 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center"
                 >
                   +

@@ -6,7 +6,7 @@ export const createOrder = createAsyncThunk(
   async (orderData, { rejectWithValue }) => {
     try {
       const response = await api.post("/api/orders", orderData);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to create order",
@@ -20,7 +20,7 @@ export const getMyOrders = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await api.get("/api/orders/myorders");
-      return response.data;
+      return response.data.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "failed to fetch Order",
@@ -43,23 +43,6 @@ export const getOrderById = createAsyncThunk(
   },
 );
 
-export const payOrder = createAsyncThunk(
-  "orders/payOrder",
-  async ({ orderId, paymentResult }, { rejectWithValue }) => {
-    try {
-      const response = await api.put(
-        `/api/orders/${orderId}/pay`,
-        paymentResult,
-      );
-      return response.data.data;
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to process payment",
-      );
-    }
-  },
-);
-
 const initialState = {
   orders: [],
   currentOrder: null,
@@ -73,6 +56,9 @@ const orderSlice = createSlice({
   reducers: {
     clearOrder: (state) => {
       state.currentOrder = null;
+      state.requestId = null;
+      state.isLoading = false;
+      state.error = null;
     },
     clearError: (state) => {
       state.error = null;
@@ -81,54 +67,51 @@ const orderSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Create Order
-      .addCase(createOrder.pending, (state) => {
+      .addCase(createOrder.pending, (state, action) => {
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(createOrder.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.currentOrder = action.payload;
       })
       .addCase(createOrder.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       })
       // Get My Orders
-      .addCase(getMyOrders.pending, (state) => {
+      .addCase(getMyOrders.pending, (state, action) => {
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(getMyOrders.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
-        state.orders = action.payload.data;
+        state.orders = action.payload;
       })
       .addCase(getMyOrders.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       })
       // Get Order By ID
-      .addCase(getOrderById.pending, (state) => {
+      .addCase(getOrderById.pending, (state, action) => {
+        state.currentOrder = null;
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(getOrderById.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.currentOrder = action.payload;
       })
       .addCase(getOrderById.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
-      })
-      // Pay Order
-      .addCase(payOrder.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(payOrder.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.currentOrder = action.payload;
-      })
-      .addCase(payOrder.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       });

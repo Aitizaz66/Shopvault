@@ -2,19 +2,22 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
+  clearProduct,
   getProductById,
   getProductReviews,
   addReview,
 } from "../store/slices/productSlice.js";
-import { addToCart } from "../store/slices/cartSlice.js";
+import useCart from "../hooks/useCart.js";
+import RequestError from "../components/shared/RequestError.jsx";
 import { toast } from "react-hot-toast";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
-  const { product, isLoading, reviews } =
+  const { product, isLoading, reviews, error, reviewError, isReviewLoading, isReviewSubmitting } =
     useSelector((state) => state.products) || {};
 
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -28,6 +31,7 @@ const ProductDetailPage = () => {
       dispatch(getProductById(id));
       dispatch(getProductReviews(id));
     }
+    return () => dispatch(clearProduct());
   }, [dispatch, id]);
   // Handle quantity change
   const handleQuantityChange = (e) => {
@@ -41,30 +45,7 @@ const ProductDetailPage = () => {
   const handleAddToCart = () => {
     if (!product) return;
 
-    if (!isAuthenticated) {
-      toast.error("Please login to add items to your cart");
-      navigate(`/login?redirect=/product/${id}`);
-      return;
-    }
-
-    if (product.stock === 0) {
-      toast.error("Sorry, this product is out of stock!");
-      return;
-    }
-
-    dispatch(
-      addToCart({
-        product: product._id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        stock: product.stock,
-        quantity: quantity,
-      }),
-    );
-
-    toast.success(`${product.name} added to cart!`);
-    navigate("/cart");
+    if (addToCart(product, quantity)) navigate("/cart");
   };
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -111,7 +92,8 @@ const ProductDetailPage = () => {
     }
     return stars.join("");
   };
-  if (isLoading) {
+  if (error) return <RequestError message={error} onRetry={() => dispatch(getProductById(id))} />;
+  if (isLoading || (product && product._id !== id)) {
     return (
       <div className="container-custom py-16">
         <div className="animate-pulse">
@@ -216,7 +198,7 @@ const ProductDetailPage = () => {
           <div className="mb-4">
             <span className="text-sm text-gray-500">Category: </span>
             <Link
-              to={`/products?category=${product.category}`}
+              to={`/products?category=${encodeURIComponent(product.category)}`}
               className="text-blue-600 hover:underline"
             >
               {product.category}
@@ -300,6 +282,8 @@ const ProductDetailPage = () => {
         </div>
       </div>
 
+      {reviewError && <RequestError message={reviewError} onRetry={() => dispatch(getProductReviews(id))} />}
+      {isReviewLoading && <p className="text-gray-500">Loading reviews...</p>}
       {/* Reviews Section */}
       <div className="mt-12">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
@@ -354,6 +338,7 @@ const ProductDetailPage = () => {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows="4"
+                    maxLength={500}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Share your experience with this product..."
                 required
@@ -363,6 +348,7 @@ const ProductDetailPage = () => {
             <div className="flex space-x-4">
               <button
                 type="submit"
+                    disabled={isReviewSubmitting}
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Submit Review

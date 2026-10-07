@@ -1,3 +1,4 @@
+import RequestError from "../components/shared/RequestError.jsx";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useSearchParams } from "react-router-dom";
@@ -8,7 +9,7 @@ const OrderSuccessPage = () => {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("orderId");
 
-  const { currentOrder, isLoading } = useSelector((state) => state.orders);
+  const { currentOrder, isLoading, error } = useSelector((state) => state.orders);
 
   useEffect(() => {
     if (orderId) {
@@ -34,7 +35,8 @@ const OrderSuccessPage = () => {
     );
   }
 
-  if (isLoading) {
+  if (error && !isLoading) return <RequestError message={error} onRetry={() => dispatch(getOrderById(orderId))} />;
+  if (isLoading || (currentOrder && currentOrder._id !== orderId)) {
     return (
       <div className="container-custom py-16">
         <div className="max-w-2xl mx-auto">
@@ -200,7 +202,7 @@ const OrderSuccessPage = () => {
 
             {/* Email Confirmation */}
             <div className="bg-gray-50 rounded-lg p-4 text-center text-sm text-gray-500">
-              <p>A confirmation email has been sent to your email address.</p>
+              <p>Your order is saved. You can view its status in My Orders.</p>
             </div>
           </div>
         </div>

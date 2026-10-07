@@ -4,46 +4,13 @@ const FAQPage = () => {
   const [openIndex, setOpenIndex] = useState(null);
 
   const faqs = [
-    {
-      question: "What payment methods do you accept?",
-      answer:
-        "We accept all major credit and debit cards (Visa, Mastercard), as well as PayPal and Shop Pay. All payments are processed securely through Stripe.",
-    },
-    {
-      question: "How long does shipping take?",
-      answer:
-        "Standard shipping typically takes 3-5 business days. Express shipping is available at checkout for 1-2 business day delivery. You will receive a tracking number once your order ships.",
-    },
-    {
-      question: "Do you offer free shipping?",
-      answer:
-        "Yes! We offer free standard shipping on all orders over $50. For orders under $50, shipping is calculated at checkout based on your location.",
-    },
-    {
-      question: "What is your return policy?",
-      answer:
-        "We offer a 30-day hassle-free return policy. If you are not completely satisfied with your purchase, you can return it within 30 days for a full refund. Items must be unused and in original packaging.",
-    },
-    {
-      question: "How do I track my order?",
-      answer:
-        "Once your order ships, you will receive an email with a tracking number. You can also track your order by logging into your account and viewing your order history.",
-    },
-    {
-      question: "Can I change or cancel my order?",
-      answer:
-        "Orders can be modified or cancelled within 1 hour of placement. Please contact our support team immediately if you need to make changes. Once an order is processed for shipping, it cannot be cancelled.",
-    },
-    {
-      question: "Do you ship internationally?",
-      answer:
-        "Currently, we ship to all 50 United States. International shipping is coming soon! Please check back later or subscribe to our newsletter for updates.",
-    },
-    {
-      question: "How do I contact customer support?",
-      answer:
-        "You can reach our customer support team via email at support@shopvault.com, by phone at +1 (555) 123-4567, or through our Contact Us page. We are available Monday through Friday, 9 AM to 6 PM EST.",
-    },
+    { question: "What payment methods do you accept?", answer: "Cash on Delivery is currently available. No online payment is collected at checkout. All store prices are in USD." },
+    { question: "How much is shipping?", answer: "Shipping is $5 and is free when the item subtotal is above $50. Tax is 10% of the item subtotal. Your complete total is shown before you place the order." },
+    { question: "How do I check my order?", answer: "Sign in and open My Orders to see the current status and saved order details." },
+    { question: "Can I cancel my order?", answer: "Contact support with your order number. The store can cancel unpaid orders while they are Pending or Processing. Shipped and delivered orders cannot be cancelled through checkout." },
+    { question: "What if checkout reports an error?", answer: "Check your cart quantities and refresh the order total. If your connection dropped, check My Orders first. Retrying the same checkout request will return the existing order when it was already saved." },
+    { question: "How do I ask about delivery, returns, or shipping locations?", answer: "Contact support before ordering to confirm delivery availability, timing, and return arrangements." },
+    { question: "How do I contact support?", answer: "Use Contact Us to prepare an email, or email support@shopvault.com. Include your order number when asking about an order." },
   ];
 
   const toggleFAQ = (index) => {

@@ -1,3 +1,4 @@
+import { safeRedirect } from "../../../shared/navigation.js";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -20,12 +21,12 @@ const RegisterPage = () => {
   );
 
   // Get redirect URL from query params
-  const redirect = new URLSearchParams(location.search).get("redirect") || "/";
+  const redirect = safeRedirect(new URLSearchParams(location.search).get("redirect"));
 
   useEffect(() => {
     // If already authenticated, redirect
     if (isAuthenticated) {
-      navigate(redirect);
+      navigate(redirect, { replace: true });
     }
   }, [isAuthenticated, navigate, redirect]);
 
@@ -53,7 +54,7 @@ const RegisterPage = () => {
     try {
       await dispatch(register({ name, email, password })).unwrap();
       toast.success("Account created successfully!");
-      navigate(redirect);
+      navigate(redirect, { replace: true });
     } catch (error) {
       toast.error(error || "Registration failed. Please try again.");
     }
@@ -165,7 +166,7 @@ const RegisterPage = () => {
           <p className="text-gray-600">
             Already have an account?{" "}
             <Link
-              to={`/login?redirect=${redirect}`}
+              to={`/login?redirect=${encodeURIComponent(redirect)}`}
               className="text-blue-600 font-semibold hover:underline"
             >
               Sign In

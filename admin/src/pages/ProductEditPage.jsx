@@ -1,7 +1,10 @@
+import LoadingSpinner from "../components/shared/LoadingSpinner.jsx";
+import RequestError from "../components/shared/RequestError.jsx";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
 import {
+  clearProduct,
   getProductById,
   createProduct,
   updateProduct,
@@ -13,7 +16,7 @@ const ProductEditPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { product, isLoading } = useSelector((state) => state.adminProducts);
+  const { product, isLoading, error } = useSelector((state) => state.adminProducts);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEdit = id && id !== "new";
@@ -22,6 +25,7 @@ const ProductEditPage = () => {
     if (isEdit) {
       dispatch(getProductById(id));
     }
+    return () => dispatch(clearProduct());
   }, [dispatch, id, isEdit]);
 
   const handleSubmit = async (formData) => {
@@ -42,6 +46,8 @@ const ProductEditPage = () => {
     }
   };
 
+  if (isEdit && product?._id !== id) return error ? <RequestError message={error} onRetry={() => dispatch(getProductById(id))} /> : <LoadingSpinner />;
+
   return (
     <div>
       <div className="mb-6">
@@ -55,6 +61,7 @@ const ProductEditPage = () => {
 
       <div className="bg-white rounded-xl shadow-sm p-6">
         <ProductForm
+          key={isEdit ? id : "new"}
           product={isEdit ? product : null}
           onSubmit={handleSubmit}
           isLoading={isSubmitting || isLoading}

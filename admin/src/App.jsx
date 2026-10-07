@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { checkAuth } from "./store/slices/adminAuthSlice.js";
+import { checkAuth, sessionExpired } from "./store/slices/adminAuthSlice.js";
 
 // Layout
 import AdminLayout from "./layouts/AdminLayout.jsx";
@@ -25,7 +25,10 @@ function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    const expire = () => dispatch(sessionExpired());
+    window.addEventListener("shopvault-admin:unauthorized", expire);
     dispatch(checkAuth());
+    return () => window.removeEventListener("shopvault-admin:unauthorized", expire);
   }, [dispatch]);
 
   return (

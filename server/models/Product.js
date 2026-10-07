@@ -42,6 +42,7 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Please add product stock quantity"],
       min: [0, "Stock cannot be negative"],
+      validate: { validator: Number.isSafeInteger, message: "Stock must be a whole number" },
       default: 0,
     },
     rating: {
@@ -85,6 +86,7 @@ const productSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    optimisticConcurrency: true,
   },
 );
 

@@ -1,8 +1,8 @@
+import { toast } from "react-hot-toast";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../../store/slices/authSlice.js";
-import { openCart } from "../../store/slices/uiSlice.js";
 import {
   ShoppingCartIcon,
   UserIcon,
@@ -37,14 +37,15 @@ const Navbar = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      navigate(`/products?keyword=${searchTerm.trim()}`);
+      navigate(`/products?keyword=${encodeURIComponent(searchTerm.trim())}`);
       setSearchTerm("");
       setIsMenuOpen(false);
     }
   };
 
   const handleLogout = async () => {
-    await dispatch(logoutUser());
+    try { await dispatch(logoutUser()).unwrap(); }
+    catch (error) { toast.error(error || "Could not sign out. Please try again."); return; }
     setIsDropdownOpen(false);
     navigate("/");
   };
@@ -116,7 +117,8 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center space-x-3">
             <button
-              onClick={() => dispatch(openCart())}
+              onClick={() => { setIsMenuOpen(false); navigate("/cart"); }}
+              aria-label="View cart"
               className="relative p-2 rounded-full hover:bg-gray-100"
             >
               <ShoppingCartIcon className="h-6 w-6 text-gray-700" />
@@ -184,7 +186,8 @@ const Navbar = () => {
 
           <div className="flex items-center space-x-2 md:hidden">
             <button
-              onClick={() => dispatch(openCart())}
+              onClick={() => { setIsMenuOpen(false); navigate("/cart"); }}
+              aria-label="View cart"
               className="relative p-2"
             >
               <ShoppingCartIcon className="h-6 w-6 text-gray-700" />

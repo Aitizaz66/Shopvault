@@ -1,3 +1,4 @@
+import { cartTotals } from "../../../shared/pricing.js";
 import { useSelector, useDispatch } from "react-redux";
 import {
   addToCart,
@@ -14,11 +15,16 @@ const useCart = () => {
   const { isCartOpen } = useSelector((state) => state.ui);
 
   const handleAddToCart = (product, quantity = 1) => {
-    if (product.stock === 0) {
+    if (!Number.isInteger(quantity) || quantity < 1 || product.stock < 1) {
       toast.error("Sorry, this product is out of stock!");
       return false;
     }
 
+    const existing = cartItems.find(item => item.product === product._id);
+    if ((existing?.quantity || 0) + quantity > product.stock) {
+      toast.error(`Only ${product.stock} available. Check the quantity in your cart.`);
+      return false;
+    }
     const item = {
       product: product._id,
       name: product.name,
@@ -55,13 +61,7 @@ const useCart = () => {
     dispatch(openCart());
   };
   // Calculate totals
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0,
-  );
-  const shipping = subtotal > 50 ? 0 : 5;
-  const tax = subtotal * 0.1;
-  const total = subtotal + shipping + tax;
+  const { itemsPrice: subtotal, shippingPrice: shipping, taxPrice: tax, totalPrice: total } = cartTotals(cartItems);
   const itemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   return {

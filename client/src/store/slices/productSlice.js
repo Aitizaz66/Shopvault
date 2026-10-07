@@ -51,7 +51,7 @@ export const getProductsByCategory = createAsyncThunk(
   "products/getProductsByCategory",
   async (category, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/api/products/category/${category}`);
+      const response = await api.get(`/api/products/category/${encodeURIComponent(category)}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -107,75 +107,44 @@ export const getProductReviews = createAsyncThunk(
 );
 
 const initialState = {
-  products: [],
-  product: null,
-  categories: [],
-  reviews: [],
-  isLoading: false,
-  error: null,
-  pagination: {
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 1,
-  },
+  products: [], product: null, categories: [], reviews: null, isLoading: false,
+  isReviewLoading: false, isReviewSubmitting: false, error: null, reviewError: null, requests: {},
+  pagination: { page: 1, limit: 12, total: 0, pages: 1 },
 };
-
 const productSlice = createSlice({
-  name: "products",
-  initialState,
+  name: "products", initialState,
   reducers: {
-    clearProduct: (state) => {
-      state.product = null;
-    },
-    clearError: (state) => {
-      state.error = null;
-    },
+    clearProduct: state => { state.product = null; state.reviews = null; state.error = null; state.reviewError = null; state.requests = {}; },
+    clearError: state => { state.error = null; },
   },
-  extraReducers: (builder) => {
-    builder
-      // Get Products
-      .addCase(getProducts.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(getProducts.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.products = action.payload.data || [];
-        state.pagination = action.payload.pagination || {
-          page: 1,
-          limit: 10,
-          total: 0,
-          pages: 1,
-        };
-      })
-      .addCase(getProducts.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
-        state.products = [];
-      })
-      // Get Product By ID
-      .addCase(getProductById.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(getProductById.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.product = action.payload;
-      })
-      .addCase(getProductById.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
-      })
-      // Get Categories
-      .addCase(getCategories.fulfilled, (state, action) => {
-        state.categories = action.payload || [];
-      })
-      .addCase(getCategories.rejected, (state) => {
-        state.categories = [];
+  extraReducers: builder => {
+    for (const thunk of [getProducts, getProductsByCategory, getProductById, getProductBySlug, getCategories, getProductReviews, addReview]) {
+      const key = thunk === getProductById || thunk === getProductBySlug ? "detail" : thunk === getProducts || thunk === getProductsByCategory ? "list" : thunk.typePrefix;
+      const review = thunk === getProductReviews || thunk === addReview;
+      const flag = thunk === getCategories ? "isCategoryLoading" : thunk === addReview ? "isReviewSubmitting" : review ? "isReviewLoading" : "isLoading";
+      const errorKey = thunk === getCategories ? "categoryError" : review ? "reviewError" : "error";
+      builder.addCase(thunk.pending, (state, action) => {
+        state.requests[key] = action.meta.requestId;
+        state[flag] = true; state[errorKey] = null;
+        if (key === "detail") state.product = null;
+        if (thunk === getProductReviews) state.reviews = null;
+      }).addCase(thunk.fulfilled, (state, action) => {
+        if (state.requests[key] !== action.meta.requestId) return;
+        state[flag] = false;
+        if (key === "list") { state.products = action.payload.data || []; state.pagination = action.payload.pagination || initialState.pagination; }
+        else if (key === "detail") state.product = action.payload;
+        else if (thunk === getCategories) state.categories = action.payload;
+        else if (thunk === getProductReviews) {
+          state.reviews = action.payload;
+          if (state.product?._id === action.meta.arg) { state.product.rating = action.payload.rating; state.product.numReviews = action.payload.numReviews; }
+        }
+      }).addCase(thunk.rejected, (state, action) => {
+        if (state.requests[key] !== action.meta.requestId) return;
+        state[flag] = false; state[errorKey] = action.payload || action.error.message;
+        if (key === "list") state.products = [];
       });
+    }
   },
 });
-
 export const { clearProduct, clearError } = productSlice.actions;
 export default productSlice.reducer;

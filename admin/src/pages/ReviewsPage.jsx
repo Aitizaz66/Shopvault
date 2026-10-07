@@ -1,3 +1,4 @@
+import RequestError from "../components/shared/RequestError.jsx";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getReviews, deleteReview } from "../store/slices/adminStatsSlice.js";
@@ -6,7 +7,7 @@ import { toast } from "react-hot-toast";
 
 const ReviewsPage = () => {
   const dispatch = useDispatch();
-  const { reviews, isLoading } = useSelector((state) => state.adminStats);
+  const { reviews, isLoading, error } = useSelector((state) => state.adminStats);
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
@@ -16,7 +17,7 @@ const ReviewsPage = () => {
   const handleDelete = async (productId, reviewId) => {
     if (window.confirm("Are you sure you want to delete this review?")) {
       try {
-        await dispatch(deleteReview(productId, reviewId)).unwrap();
+        await dispatch(deleteReview({ productId, reviewId })).unwrap();
         toast.success("Review deleted successfully");
         dispatch(getReviews());
       } catch (error) {
@@ -39,6 +40,7 @@ const ReviewsPage = () => {
     ));
   };
 
+  if (error && !isLoading) return <RequestError message={error} onRetry={() => dispatch(getReviews())} />;
   if (isLoading) {
     return (
       <div className="animate-pulse">
