@@ -19,7 +19,7 @@ export const getOrderById = createAsyncThunk(
   "adminOrders/getOrderById",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/api/orders/${id}`);
+      const response = await api.get(`/api/orders/admin/${id}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -58,6 +58,9 @@ const adminOrderSlice = createSlice({
   reducers: {
     clearOrder: (state) => {
       state.currentOrder = null;
+      state.requestId = null;
+      state.isLoading = false;
+      state.error = null;
     },
     clearError: (state) => {
       state.error = null;
@@ -65,35 +68,44 @@ const adminOrderSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getOrders.pending, (state) => {
+      .addCase(getOrders.pending, (state, action) => {
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(getOrders.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.orders = action.payload;
       })
       .addCase(getOrders.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       })
-      .addCase(getOrderById.pending, (state) => {
+      .addCase(getOrderById.pending, (state, action) => {
+        state.currentOrder = null;
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(getOrderById.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.currentOrder = action.payload;
       })
       .addCase(getOrderById.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       })
-      .addCase(updateOrderStatus.pending, (state) => {
+      .addCase(updateOrderStatus.pending, (state, action) => {
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         const index = state.orders.findIndex(
           (o) => o._id === action.payload._id,
@@ -104,6 +116,7 @@ const adminOrderSlice = createSlice({
         state.currentOrder = action.payload;
       })
       .addCase(updateOrderStatus.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       });

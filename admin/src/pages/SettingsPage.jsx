@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
 import { updateUserProfile } from "../store/slices/adminAuthSlice.js";
@@ -11,23 +11,11 @@ const SettingsPage = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    name: userInfo?.name || "",
+    email: userInfo?.email || "",
     password: "",
     confirmPassword: "",
   });
-
-  // Keep form data synchronized with logged-in admin
-  useEffect(() => {
-    if (userInfo) {
-      setFormData({
-        name: userInfo.name || "",
-        email: userInfo.email || "",
-        password: "",
-        confirmPassword: "",
-      });
-    }
-  }, [userInfo]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

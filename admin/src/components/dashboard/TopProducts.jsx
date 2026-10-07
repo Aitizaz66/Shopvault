@@ -50,7 +50,7 @@ const TopProducts = ({ products, isLoading }) => {
               </p>
             </div>
             <div className="text-sm font-semibold text-blue-600">
-              ${(product.totalSold * (product.price || 0)).toFixed(2)}
+              ${(product.totalRevenue || 0).toFixed(2)}
             </div>
           </div>
         ))}

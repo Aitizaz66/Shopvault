@@ -1,3 +1,4 @@
+import RequestError from "../components/shared/RequestError.jsx";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getUsers } from "../store/slices/adminUserSlice.js";
@@ -5,7 +6,7 @@ import UserTable from "../components/users/UserTable.jsx";
 
 const UsersPage = () => {
   const dispatch = useDispatch();
-  const { users, isLoading } = useSelector((state) => state.adminUsers);
+  const { users, isLoading, error } = useSelector((state) => state.adminUsers);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -18,6 +19,7 @@ const UsersPage = () => {
         user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase()),
     ) || [];
+  if (error && !isLoading) return <RequestError message={error} onRetry={() => dispatch(getUsers())} />;
 
   return (
     <div>

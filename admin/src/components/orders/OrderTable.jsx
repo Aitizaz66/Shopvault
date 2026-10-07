@@ -1,14 +1,9 @@
+import { nextOrderStatuses } from "../../../../shared/orderStatus.js";
 import { Link } from "react-router-dom";
 import OrderStatusBadge from "./OrderStatusBadge.jsx";
 
 const OrderTable = ({ orders, isLoading, onStatusUpdate }) => {
-  const statusOptions = [
-    "Pending",
-    "Processing",
-    "Shipped",
-    "Delivered",
-    "Cancelled",
-  ];
+
 
   if (isLoading) {
     return (
@@ -58,7 +53,7 @@ const OrderTable = ({ orders, isLoading, onStatusUpdate }) => {
                 #{order._id?.slice(-6).toUpperCase()}
               </td>
               <td className="px-4 py-3 text-gray-600">
-                {order.user?.name || "Guest"}
+                {order.user?.name || order.customer?.name || "Deleted customer"}
               </td>
               <td className="px-4 py-3 text-gray-600">
                 {new Date(order.createdAt).toLocaleDateString()}
@@ -76,7 +71,7 @@ const OrderTable = ({ orders, isLoading, onStatusUpdate }) => {
                     onChange={(e) => onStatusUpdate(order._id, e.target.value)}
                     className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   >
-                    {statusOptions.map((status) => (
+                    {[order.status, ...nextOrderStatuses(order)].map((status) => (
                       <option key={status} value={status}>
                         {status}
                       </option>

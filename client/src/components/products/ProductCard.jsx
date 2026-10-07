@@ -1,47 +1,11 @@
 // frontend-customer/src/components/products/ProductCard.jsx
-import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { addToCart } from "../../store/slices/cartSlice.js";
-import { toast } from "react-hot-toast";
+import { Link } from "react-router-dom";
+import useCart from "../../hooks/useCart.js";
 
 const ProductCard = ({ product }) => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-
-  const { isAuthenticated } = useSelector((state) => state.auth);
-
-  if (!product) {
-    return null;
-  }
-
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!isAuthenticated) {
-      toast.error("Please login to add items to your cart");
-      navigate("/login?redirect=/cart");
-      return;
-    }
-
-    if (product.stock === 0) {
-      toast.error("Sorry, this product is out of stock!");
-      return;
-    }
-
-    dispatch(
-      addToCart({
-        product: product._id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        stock: product.stock,
-        quantity: 1,
-      }),
-    );
-
-    toast.success(`${product.name} added to cart!`);
-  };
+  const { addToCart } = useCart();
+  if (!product) return null;
+  const handleAddToCart = e => { e.preventDefault(); e.stopPropagation(); addToCart(product); };
 
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow overflow-hidden group">

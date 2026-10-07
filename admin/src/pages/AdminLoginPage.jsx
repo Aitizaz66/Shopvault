@@ -1,6 +1,7 @@
+import { safeRedirect } from "../../../shared/navigation.js";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { login, clearError } from "../store/slices/adminAuthSlice.js";
 import { toast } from "react-hot-toast";
 
@@ -11,13 +12,16 @@ const AdminLoginPage = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const requested = new URLSearchParams(location.search).get("redirect");
+  const redirect = requested?.startsWith("/admin/login") ? "/admin" : safeRedirect(requested, "/admin");
   const { isAuthenticated, isAdmin } = useSelector((state) => state.adminAuth);
 
   useEffect(() => {
     if (isAuthenticated && isAdmin) {
-      navigate("/admin");
+      navigate(redirect, { replace: true });
     }
-  }, [isAuthenticated, isAdmin, navigate]);
+  }, [isAuthenticated, isAdmin, navigate, redirect]);
 
   useEffect(() => {
     return () => {
@@ -38,7 +42,7 @@ const AdminLoginPage = () => {
     try {
       await dispatch(login({ email, password })).unwrap();
       toast.success("Welcome Admin!");
-      navigate("/admin");
+      navigate(redirect, { replace: true });
     } catch (error) {
       toast.error(error || "Invalid credentials");
     } finally {

@@ -1,3 +1,4 @@
+import RequestError from "../components/shared/RequestError.jsx";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
@@ -11,7 +12,7 @@ import { toast } from "react-hot-toast";
 
 const ProductsPage = () => {
   const dispatch = useDispatch();
-  const { products, isLoading } = useSelector((state) => state.adminProducts);
+  const { products, isLoading, error } = useSelector((state) => state.adminProducts);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -33,6 +34,7 @@ const ProductsPage = () => {
     products?.filter((product) =>
       product.name?.toLowerCase().includes(searchTerm.toLowerCase()),
     ) || [];
+  if (error && !isLoading) return <RequestError message={error} onRetry={() => dispatch(getProducts())} />;
 
   return (
     <div>

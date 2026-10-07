@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema(
   {
+    idempotencyKey: { type: String, select: false },
+    requestHash: { type: String, select: false },
+    currency: { type: String, default: "USD" },
+    customer: { name: String, email: String },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -119,6 +123,10 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+orderSchema.index({ user: 1, idempotencyKey: 1 }, { unique: true, partialFilterExpression: { idempotencyKey: { $type: "string" } } });
+
+orderSchema.set("toJSON", { transform(doc, value) { delete value.requestHash; delete value.idempotencyKey; return value; } });
 
 const Order = mongoose.model("Order", orderSchema);
 

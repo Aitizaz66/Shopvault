@@ -1,3 +1,4 @@
+import RequestError from "../components/shared/RequestError.jsx";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
@@ -7,12 +8,13 @@ import EmptyState from "../components/shared/EmptyState.jsx";
 
 const OrderHistoryPage = () => {
   const dispatch = useDispatch();
-  const { orders, isLoading } = useSelector((state) => state.orders);
+  const { orders, isLoading, error } = useSelector((state) => state.orders);
 
   useEffect(() => {
     dispatch(getMyOrders());
   }, [dispatch]);
 
+  if (error && !isLoading) return <RequestError message={error} onRetry={() => dispatch(getMyOrders())} />;
   if (isLoading) {
     return (
       <div className="container-custom py-16 flex justify-center">

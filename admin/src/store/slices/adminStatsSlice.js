@@ -70,39 +70,48 @@ const adminStatsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getDashboardStats.pending, (state) => {
+      .addCase(getDashboardStats.pending, (state, action) => {
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(getDashboardStats.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.stats = action.payload;
       })
       .addCase(getDashboardStats.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       })
-      .addCase(getReviews.pending, (state) => {
+      .addCase(getReviews.pending, (state, action) => {
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(getReviews.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.reviews = action.payload;
       })
       .addCase(getReviews.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       })
-      .addCase(deleteReview.pending, (state) => {
+      .addCase(deleteReview.pending, (state, action) => {
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(deleteReview.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.reviews = state.reviews.filter((r) => r._id !== action.payload);
       })
       .addCase(deleteReview.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       });

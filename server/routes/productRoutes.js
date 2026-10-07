@@ -11,7 +11,10 @@ import {
 } from "../controllers/productController.js";
 import { adminProtect } from "../middleware/auth.js";
 
+import { uploadImage, storeImage } from "../controllers/uploadController.js";
+
 const router = express.Router();
+router.post("/upload", adminProtect, uploadImage, storeImage);
 
 router.get("/", getProducts);
 router.get("/categories", getCategories);

@@ -6,14 +6,14 @@ import ImageUpload from "./ImageUpload.jsx";
 const ProductForm = ({ product, onSubmit, isLoading }) => {
   const navigate = useNavigate();
 
-  // Initialize state directly from props - NO useEffect needed
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: product?.name || "",
     description: product?.description || "",
-    price: product?.price || "",
+    price: product?.price ?? "",
     category: product?.category || "",
     image: product?.image || "",
-    stock: product?.stock || "",
+    stock: product?.stock ?? 0,
   });
 
   const handleChange = (e) => {
@@ -37,7 +37,8 @@ const ProductForm = ({ product, onSubmit, isLoading }) => {
     // Validate
     if (
       !formData.name ||
-      !formData.price ||
+      formData.price === "" ||
+      !formData.description.trim() ||
       !formData.category ||
       !formData.image
     ) {
@@ -48,10 +49,16 @@ const ProductForm = ({ product, onSubmit, isLoading }) => {
     const submitData = {
       ...formData,
       price: parseFloat(formData.price),
-      stock: parseInt(formData.stock) || 0,
+      stock: Number(formData.stock),
     };
 
-    onSubmit(submitData);
+    if (!Number.isInteger(submitData.stock) || submitData.stock < 0 || !Number.isFinite(submitData.price) || submitData.price < 0) { toast.error("Enter a valid price and whole-number stock quantity"); return; }
+    if (product) {
+      if (submitData.stock === product.stock) delete submitData.stock;
+      else submitData.stockBaseline = product.stock;
+      if (submitData.image === product.image) delete submitData.image;
+    }
+    if (!isUploading && !isLoading) onSubmit(submitData);
   };
 
   return (
@@ -64,6 +71,7 @@ const ProductForm = ({ product, onSubmit, isLoading }) => {
         <ImageUpload
           onImageUpload={handleImageUpload}
           initialImage={formData.image}
+          onBusyChange={setIsUploading}
         />
       </div>
 
@@ -86,7 +94,7 @@ const ProductForm = ({ product, onSubmit, isLoading }) => {
       {/* Description */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Description
+          Description *
         </label>
         <textarea
           name="description"
@@ -95,6 +103,8 @@ const ProductForm = ({ product, onSubmit, isLoading }) => {
           rows="4"
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
           placeholder="Enter product description"
+          required
+          maxLength={2000}
         />
       </div>
 
@@ -152,10 +162,10 @@ const ProductForm = ({ product, onSubmit, isLoading }) => {
       <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || isUploading}
           className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading
+          {isUploading ? "Uploading image..." : isLoading
             ? "Saving..."
             : product
               ? "Update Product"

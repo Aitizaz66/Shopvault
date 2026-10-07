@@ -1,3 +1,4 @@
+import RequestError from "../components/shared/RequestError.jsx";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, Link } from "react-router-dom";
@@ -8,7 +9,7 @@ import { ArrowLeft } from "lucide-react";
 const OrderDetailPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { currentOrder, isLoading } = useSelector((state) => state.adminOrders);
+  const { currentOrder, isLoading, error } = useSelector((state) => state.adminOrders);
 
   useEffect(() => {
     if (id) {
@@ -16,7 +17,8 @@ const OrderDetailPage = () => {
     }
   }, [dispatch, id]);
 
-  if (isLoading) {
+  if (error && !isLoading) return <RequestError message={error} onRetry={() => dispatch(getOrderById(id))} />;
+  if (isLoading || (currentOrder && currentOrder._id !== id)) {
     return (
       <div className="animate-pulse">
         <div className="h-8 bg-gray-200 rounded w-48 mb-6"></div>

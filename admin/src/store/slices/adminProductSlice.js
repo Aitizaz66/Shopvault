@@ -84,6 +84,9 @@ const adminProductSlice = createSlice({
   reducers: {
     clearProduct: (state) => {
       state.product = null;
+      state.requestId = null;
+      state.isLoading = false;
+      state.error = null;
     },
     clearError: (state) => {
       state.error = null;
@@ -91,47 +94,59 @@ const adminProductSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getProducts.pending, (state) => {
+      .addCase(getProducts.pending, (state, action) => {
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(getProducts.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.products = action.payload;
       })
       .addCase(getProducts.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       })
-      .addCase(getProductById.pending, (state) => {
+      .addCase(getProductById.pending, (state, action) => {
+        state.product = null;
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(getProductById.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.product = action.payload;
       })
       .addCase(getProductById.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       })
-      .addCase(createProduct.pending, (state) => {
+      .addCase(createProduct.pending, (state, action) => {
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(createProduct.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.products.unshift(action.payload);
       })
       .addCase(createProduct.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       })
-      .addCase(updateProduct.pending, (state) => {
+      .addCase(updateProduct.pending, (state, action) => {
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(updateProduct.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         const index = state.products.findIndex(
           (p) => p._id === action.payload._id,
@@ -142,18 +157,22 @@ const adminProductSlice = createSlice({
         state.product = action.payload;
       })
       .addCase(updateProduct.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       })
-      .addCase(deleteProduct.pending, (state) => {
+      .addCase(deleteProduct.pending, (state, action) => {
+        state.requestId = action.meta.requestId;
         state.isLoading = true;
         state.error = null;
       })
       .addCase(deleteProduct.fulfilled, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.products = state.products.filter((p) => p._id !== action.payload);
       })
       .addCase(deleteProduct.rejected, (state, action) => {
+        if (state.requestId !== action.meta.requestId) return;
         state.isLoading = false;
         state.error = action.payload;
       });

@@ -1,69 +1,37 @@
-import { useState } from "react";
-import { Upload, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import api from "../../utils/axios.js";
+import { errorMessage } from "../../../../shared/http.js";
 
-const ImageUpload = ({ onImageUpload, initialImage }) => {
-  const [image, setImage] = useState(initialImage || "");
+export default function ImageUpload({ initialImage, onImageUpload, onBusyChange }) {
   const [isUploading, setIsUploading] = useState(false);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  const controller = useRef(null);
+  useEffect(() => () => controller.current?.abort(), []);
+  const upload = async event => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
     if (!file) return;
-
-    // Show uploading state
-    setIsUploading(true);
-
-    // Use local URL preview
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imageUrl = event.target.result;
-      setImage(imageUrl);
-      onImageUpload(imageUrl);
-      setIsUploading(false);
-    };
-    reader.onerror = () => {
-      setIsUploading(false);
-    };
-    reader.readAsDataURL(file);
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) { toast.error("Choose a JPG, PNG or WebP image up to 5 MB"); return; }
+    setIsUploading(true); onBusyChange?.(true);
+    controller.current = new AbortController();
+    try {
+      const body = new FormData(); body.append("image", file);
+      const response = await api.post("/api/products/upload", body, { signal: controller.current.signal });
+      onImageUpload(response.data.data.url);
+      toast.success("Image uploaded");
+    } catch (error) { if (error.code !== "ERR_CANCELED") toast.error(errorMessage(error)); }
+    finally { setIsUploading(false); onBusyChange?.(false); }
   };
-
-  const handleRemove = () => {
-    setImage("");
-    onImageUpload("");
-  };
-
-  return (
-    <div className="space-y-4">
-      {image ? (
-        <div className="relative inline-block">
-          <img
-            src={image}
-            alt="Product"
-            className="w-48 h-48 object-cover rounded-lg border border-gray-200"
-          />
-          <button
-            type="button"
-            onClick={handleRemove}
-            className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      ) : (
-        <label className="flex flex-col items-center justify-center w-48 h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-          <Upload className="h-8 w-8 text-gray-400" />
-          <span className="text-sm text-gray-500 mt-2">Upload Image</span>
-          <span className="text-xs text-gray-400">PNG, JPG up to 5MB</span>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </label>
-      )}
-      {isUploading && <div className="text-sm text-blue-600">Uploading...</div>}
-    </div>
-  );
-};
-
-export default ImageUpload;
+  const legacy = initialImage?.startsWith("data:");
+  return <div className="space-y-3">
+    {initialImage && <img src={initialImage} alt="Product preview" className="w-40 h-40 object-contain rounded-lg border" />}
+    <label className="block text-sm font-medium">Upload an image (JPG, PNG or WebP, up to 5 MB)
+      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={upload} disabled={isUploading} className="block mt-2" />
+    </label>
+    <label className="block text-sm font-medium">Or use an image URL
+      <input type="url" value={legacy ? "" : initialImage || ""} onChange={event => onImageUpload(event.target.value)} disabled={isUploading} placeholder="https://example.com/product.jpg" maxLength={2048} className="block w-full border rounded-lg p-2 mt-1" />
+    </label>
+    {legacy && <p className="text-sm text-gray-500">Your existing image is kept unless you replace it.</p>}
+    {isUploading && <p role="status">Uploading image...</p>}
+  </div>;
+}

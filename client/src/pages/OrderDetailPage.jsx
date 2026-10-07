@@ -1,3 +1,4 @@
+import RequestError from "../components/shared/RequestError.jsx";
 import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -7,20 +8,23 @@ import LoadingSpinner from "../components/shared/LoadingSpinner.jsx";
 const OrderDetailPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { currentOrder: order, isLoading } = useSelector((s) => s.orders);
+  const { currentOrder: order, isLoading, error } = useSelector((s) => s.orders);
 
   useEffect(() => {
     dispatch(getOrderById(id));
     return () => dispatch(clearOrder());
   }, [dispatch, id]);
 
-  if (isLoading || !order) {
+  if (error && !isLoading) return <RequestError message={error} onRetry={() => dispatch(getOrderById(id))} />;
+  if (isLoading || (order && order._id !== id)) {
     return (
       <div className="container-custom py-16 flex justify-center">
         <LoadingSpinner />
       </div>
     );
   }
+
+  if (!order) return <RequestError message="Order not found" onRetry={() => dispatch(getOrderById(id))} />;
 
   return (
     <div className="container-custom py-8 max-w-3xl">

@@ -1,0 +1,35 @@
+name: ShopVault regression checks
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            server/package-lock.json
+            client/package-lock.json
+            admin/package-lock.json
+      - run: npm ci --prefix server
+      - run: npm ci --prefix client
+      - run: npm ci --prefix admin
+      - name: API and transaction regressions
+        run: npm test --prefix server
+      - name: Storefront regressions, lint and build
+        run: |
+          npm test --prefix client
+          npm run lint --prefix client
+          npm run build --prefix client
+      - name: Admin regressions, lint and build
+        run: |
+          npm test --prefix admin
+          npm run lint --prefix admin
+          npm run build --prefix admin

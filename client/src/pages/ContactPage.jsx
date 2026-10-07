@@ -8,7 +8,7 @@ const ContactPage = () => {
     subject: "",
     message: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -18,33 +18,12 @@ const ContactPage = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
-
-    if (!formData.name || !formData.email || !formData.message) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Here you would send the message to your backend
-      // For now, we'll just show a success message
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      toast.success("Message sent successfully! We'll get back to you soon.");
-      setFormData({
-        name: "",
-        email: "",
-        subject: "",
-        message: "",
-      });
-    } catch (error) {
-      toast.error("Failed to send message. Please try again.", error.message);
-    } finally {
-      setIsSubmitting(false);
-    }
+    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) { toast.error("Please fill in all required fields"); return; }
+    const subject = formData.subject.trim() || "ShopVault support request";
+    const body = `Name: ${formData.name}\nReply to: ${formData.email}\n\n${formData.message}`;
+    window.location.href = `mailto:support@shopvault.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   return (
@@ -64,51 +43,8 @@ const ContactPage = () => {
             <h3 className="text-lg font-semibold text-gray-800 mb-4">
               Get in Touch
             </h3>
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <span className="text-xl">📍</span>
-                <div>
-                  <p className="font-medium text-gray-800">Address</p>
-                  <p className="text-sm text-gray-600">
-                    123 Commerce Street
-                    <br />
-                    New York, NY 10001
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <span className="text-xl">📧</span>
-                <div>
-                  <p className="font-medium text-gray-800">Email</p>
-                  <p className="text-sm text-gray-600">support@shopvault.com</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <span className="text-xl">📞</span>
-                <div>
-                  <p className="font-medium text-gray-800">Phone</p>
-                  <p className="text-sm text-gray-600">+1 (555) 123-4567</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <span className="text-xl">🕐</span>
-                <div>
-                  <p className="font-medium text-gray-800">Working Hours</p>
-                  <p className="text-sm text-gray-600">
-                    Mon - Fri: 9:00 AM - 6:00 PM
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              Quick Response
-            </h3>
-            <p className="text-sm text-gray-600">
-              We typically respond within 24 hours during business days.
-            </p>
+            <a href="mailto:support@shopvault.com" className="text-blue-600 underline">support@shopvault.com</a>
+            <p className="text-sm text-gray-600 mt-4">For order questions, include your order number.</p>
           </div>
         </div>
 
@@ -116,9 +52,10 @@ const ContactPage = () => {
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl shadow-md p-6 md:p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">
-              Send Us a Message
+              Prepare a Support Email
             </h2>
 
+            <p className="text-sm text-gray-600 mb-4">This opens a draft in your email app. Review and send it there. This page does not send messages automatically.</p>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
@@ -182,10 +119,9 @@ const ContactPage = () => {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? "Sending..." : "Send Message"}
+                Open Email Draft
               </button>
             </form>
           </div>
