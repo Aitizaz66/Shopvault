@@ -10,7 +10,7 @@ import { transformWithOxc } from "vite";
 import { registerJSX } from "../../shared/test/jsx.js";
 import { safeRedirect } from "../../shared/navigation.js";
 import { readStored } from "../../shared/storage.js";
-import { createApi } from "../../shared/http.js";
+import { createApi, apiBaseUrl } from "../../shared/http.js";
 import axios from "axios";
 import { checkoutItems, checkoutAttempt, clearCheckoutAttempt } from "../src/utils/checkout.js";
 const memory = new Map();
@@ -76,6 +76,12 @@ test("reviews and profile updates have complete lifecycles without restarting th
   auth = authReducer(auth, updateUserProfile.pending("update"));
   assert.equal(auth.isChecking, false); assert.equal(auth.isAuthenticated, true); assert.equal(auth.isLoading, true);
 });
+test("production auth stays on the storefront origin even with a stale Render API setting", () => {
+  const configured = createApi(axios, apiBaseUrl({ PROD: true, VITE_API_URL: "https://shopvault-b61d.onrender.com" }));
+  assert.equal(configured.getUri({ url: "/api/auth/register" }), "/api/auth/register");
+  assert.equal(apiBaseUrl({ PROD: false, VITE_API_URL: "http://localhost:5000" }), "http://localhost:5000");
+});
+
 test("internal redirects, malformed storage and API URL configuration are handled", async () => {
   assert.equal(safeRedirect("checkout"), "/checkout"); assert.equal(safeRedirect("/checkout"), "/checkout");
   assert.equal(safeRedirect("//evil.test"), "/"); assert.equal(safeRedirect("\\evil.test"), "/");
