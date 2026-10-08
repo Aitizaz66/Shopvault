@@ -1,3 +1,7 @@
+// Production uses each frontend's /api rewrite so cookies stay on the same origin.
+// Ignore old VITE_API_URL values in hosted builds; otherwise they bypass the proxy.
+export const apiBaseUrl = (env = {}) => env.PROD ? "" : env.VITE_API_URL || "";
+
 export function createApi(axios, baseURL, onUnauthorized) {
   const normalized = (baseURL || "").trim().replace(/\/+$/, "").replace(/\/api$/, "");
   const api = axios.create({ baseURL: normalized, withCredentials: true, timeout: 30000 });
